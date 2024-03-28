@@ -3,13 +3,16 @@ package kr.ac.kopo.oracledb0314.repository;
 import jakarta.transaction.Transactional;
 import kr.ac.kopo.oracledb0314.entity.Memo;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.Commit;
 
+import java.util.List;
 import java.util.stream.IntStream;
 import java.util.Optional;
 
@@ -69,9 +72,12 @@ public class MemoRepositoryTests {
 
     @Test
     public void testPageDefault(){
-        Pageable pageable = (Pageable) PageRequest.of(0,10);
+        Pageable pageable = PageRequest.of(0,10);
         Page<Memo> result = memoRepository.findAll(pageable);
         System.out.println(result);
+        result.get().forEach(memo ->{
+            System.out.println("number : " + memo.getMno() + ", content : " + memo.getMemoText());
+        });
         System.out.println("=================================");
         System.out.println("Total Pages : " + result.getTotalPages());
         System.out.println("Total Count : " + result.getTotalElements());
@@ -89,5 +95,37 @@ public class MemoRepositoryTests {
         result.get().forEach(memo ->{
             System.out.println("number : " + memo.getMno() + ", content : " + memo.getMemoText());
         });
+    }
+
+    @Test
+    public void testQueryMethod(){
+        List<Memo> list = memoRepository.findByMnoBetweenOrderByMnoDesc(70L, 80L);
+
+        for (Memo memo : list){
+            System.out.println(memo.toString());
+        }
+    }
+
+    @Test
+    public void testQueryMethodWithPageable(){
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("mno").descending());
+        Page<Memo> result = memoRepository.findByMnoBetween(10L, 50L, pageable);
+        result.get().forEach(memo -> System.out.println(memo));
+    }
+
+    @Transactional
+    @Commit
+    @Test
+    public void testQueryMethod3(){
+        memoRepository.deleteMemoByMnoLessThan(5L);
+        testPageDefault();
+    }
+
+    @Test
+    public void testQueryAnnotationNative(){
+        List<Memo> result = memoRepository.getNativeResult();
+        for (Memo memo : result){
+            System.out.println(memo.toString());
+        }
     }
 }
